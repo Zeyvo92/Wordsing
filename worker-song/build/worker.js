@@ -20,14 +20,14 @@ const workerSong = async (event) => {
         do {
             const config = {
                 headers: {
-                    Authorization: `Bearer ${process.env.GENIUS_API_SECRET_TOKEN}`, // TODO REMOVE
+                    Authorization: `Bearer ${process.env.GENIUS_API_SECRET_TOKEN}`,
                 },
             };
             const url = `https://api.genius.com/artists/${job.artistId}/songs?per_page=${DYNAMODB_MAX_ITEM_PER_QUERY}&page=${++page}`;
             const axiosResponse = await (0, axios_1.default)(url, config);
             const res = axiosResponse.data;
             next_page = res.response.next_page;
-            insertToDdb(res.response.songs, job.artistId);
+            await insertToDdb(res.response.songs, job.artistId);
         } while (next_page && page < next_page);
     }
     catch (error) {
@@ -36,21 +36,14 @@ const workerSong = async (event) => {
     }
 };
 exports.workerSong = workerSong;
-const insertToDdb = (songs, artistId) => {
-    const ddb = new aws_sdk_1.DynamoDB({
-        endpoint: "http://localhost:8000",
-        // ...rest of your configuration variables
-    });
+const insertToDdb = async (songs, artistId) => {
+    const options = process.env.IS_OFFLINE
+        ? { endpoint: "http://localhost:8000" }
+        : {};
+    const ddb = new aws_sdk_1.DynamoDB(options);
     const batchParams = createBatchItem(songs, artistId);
     // Call DynamoDB to add the item to the table
-    ddb.batchWriteItem(batchParams, function (err, data) {
-        if (err) {
-            console.log("Error", err);
-        }
-        else {
-            console.log("Success", data);
-        }
-    });
+    await ddb.batchWriteItem(batchParams).promise();
 };
 const createBatchItem = (songs, artistId) => {
     const batch = {

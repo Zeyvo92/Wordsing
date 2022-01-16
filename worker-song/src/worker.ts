@@ -34,7 +34,7 @@ export const workerSong = async (event: SQSEvent) => {
       const axiosResponse = await get(url, config);
       const res: SongResponse = axiosResponse.data;
       next_page = res.response.next_page;
-      insertToDdb(res.response.songs, job.artistId);
+      await insertToDdb(res.response.songs, job.artistId);
     } while (next_page && page < next_page);
   } catch (error) {
     console.error(error);
@@ -42,22 +42,15 @@ export const workerSong = async (event: SQSEvent) => {
   }
 };
 
-const insertToDdb = (songs: Song, artistId: number) => {
-  const ddb = new DynamoDB({
-    endpoint: "http://localhost:8000",
-    // ...rest of your configuration variables
-  });
+const insertToDdb = async (songs: Song, artistId: number) => {
+  const options = process.env.IS_OFFLINE
+    ? { endpoint: "http://localhost:8000" }
+    : {};
+  const ddb = new DynamoDB(options);
 
   const batchParams: BatchWriteItemInput = createBatchItem(songs, artistId);
 
-  // Call DynamoDB to add the item to the table
-  ddb.batchWriteItem(batchParams, function (err, data) {
-    if (err) {
-      console.log("Error", err);
-    } else {
-      console.log("Success", data);
-    }
-  });
+  await ddb.batchWriteItem(batchParams).promise();
 };
 
 const createBatchItem = (

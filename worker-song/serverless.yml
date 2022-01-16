@@ -15,19 +15,24 @@ provider:
 
 functions:
   workerSong:
-    handler: build/index.workerSong # required, handler set in AWS Lambda
-    name: ${sls:stage}-worker-song # optional, Deployed Lambda name
-    description: Description of what the lambda function does # optional, Description to publish to AWS
+    handler: build/index.workerSong
+    name: ${sls:stage}-worker-song
+    description: Worker song
     events:
       - sqs:
           arn:
             Fn::GetAtt:
               - sqsWorkerSong
               - Arn
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - dynamodb:BatchWriteItem
+        Resource: { "Fn::GetAtt": ["songsTable", "Arn"] }
 
 custom:
   serverless-offline-sqs:
-    autoCreate: true # create queue if not exists
+    autoCreate: true
     apiVersion: "2012-11-05"
     endpoint: http://0.0.0.0:9324
     region: eu-west-3
@@ -40,6 +45,7 @@ custom:
     lambdaPort: 4000
 
 plugins:
+  - serverless-iam-roles-per-function
   - serverless-offline-sqs
   - serverless-offline
 
