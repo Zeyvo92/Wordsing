@@ -13,6 +13,7 @@ export const workerSong = async (event: SQSEvent) => {
   console.log("Worker Songs");
 
   const job: SongJob = JSON.parse(event.Records[0].body);
+  const promises = [];
 
   if (!job.artistId) {
     console.error("Error artistId undefined");
@@ -34,11 +35,12 @@ export const workerSong = async (event: SQSEvent) => {
       const axiosResponse = await get(url, config);
       const res: SongResponse = axiosResponse.data;
       next_page = res.response.next_page;
-      await insertToDdb(res.response.songs, job.artistId);
+      promises.push(insertToDdb(res.response.songs, job.artistId));
     } while (next_page && page < next_page);
   } catch (error) {
     console.error(error);
   }
+  await Promise.all(promises);
 };
 
 const insertToDdb = async (songs: Song, artistId: number) => {
@@ -48,7 +50,7 @@ const insertToDdb = async (songs: Song, artistId: number) => {
   const ddb = new DynamoDB(options);
   const batchParams: BatchWriteItemInput = createBatchItem(songs, artistId);
 
-  await ddb.batchWriteItem(batchParams).promise();
+  return ddb.batchWriteItem(batchParams).promise();
 };
 
 const createBatchItem = (
