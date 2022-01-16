@@ -38,7 +38,6 @@ export const workerSong = async (event: SQSEvent) => {
     } while (next_page && page < next_page);
   } catch (error) {
     console.error(error);
-    return;
   }
 };
 
@@ -47,7 +46,6 @@ const insertToDdb = async (songs: Song, artistId: number) => {
     ? { endpoint: "http://localhost:8000" }
     : {};
   const ddb = new DynamoDB(options);
-
   const batchParams: BatchWriteItemInput = createBatchItem(songs, artistId);
 
   await ddb.batchWriteItem(batchParams).promise();

@@ -6,7 +6,7 @@
   "repository": "https://github.com/Zeyvo92/Wordsing",
   "license": "MIT",
   "scripts": {
-    "build": "rimraf build && tsc",
+    "build": "rimraf build && tsc --incremental",
     "deploy": "npm run build && export $(cat .env | xargs) && npx sls deploy",
     "offline:invoke": "yarn build && npx serverless invoke local --function workerSong",
     "offline:flush:song": "aws dynamodb delete-table --table-name \"songs\" --endpoint-url http://localhost:8000 && node script/create-dynamodb-table.js",
