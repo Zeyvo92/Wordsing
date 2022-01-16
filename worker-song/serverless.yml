@@ -1,0 +1,66 @@
+# serverless.yml
+service: worker-song
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: eu-west-3
+  memorySize: 512 # optional, in MB, default is 1024
+  timeout: 60 # optional, in seconds, default is 6
+  versionFunctions: false # optional, default is true
+  tracing:
+    lambda: true # optional, enables tracing for all functions (can be true (true equals 'Active') 'Active' or 'PassThrough')
+  environment:
+    GENIUS_API_SECRET_TOKEN: ${env:GENIUS_API_SECRET_TOKEN}
+
+functions:
+  workerSong:
+    handler: build/index.workerSong # required, handler set in AWS Lambda
+    name: ${sls:stage}-worker-song # optional, Deployed Lambda name
+    description: Description of what the lambda function does # optional, Description to publish to AWS
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - sqsWorkerSong
+              - Arn
+
+custom:
+  serverless-offline-sqs:
+    autoCreate: true # create queue if not exists
+    apiVersion: "2012-11-05"
+    endpoint: http://0.0.0.0:9324
+    region: eu-west-3
+    accessKeyId: root
+    secretAccessKey: root
+    skipCacheInvalidation: false
+
+  serverless-offline:
+    httpPort: 4002
+    lambdaPort: 4000
+
+plugins:
+  - serverless-offline-sqs
+  - serverless-offline
+
+resources:
+  Resources:
+    sqsWorkerSong:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "sqs-worker-song"
+        VisibilityTimeout: 60
+
+    songsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: songs
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: N
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1

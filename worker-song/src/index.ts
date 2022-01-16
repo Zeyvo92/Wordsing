@@ -1,3 +1,1 @@
-const msg = "Hello Wordsing :)"
-
-console.log(msg)
+export { workerSong } from "./worker";
