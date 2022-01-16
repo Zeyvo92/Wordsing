@@ -25,7 +25,7 @@ export const workerSong = async (event: SQSEvent) => {
     do {
       const config: AxiosRequestConfig = {
         headers: {
-          Authorization: `Bearer ${process.env.GENIUS_API_SECRET_TOKEN}`, // TODO REMOVE
+          Authorization: `Bearer ${process.env.GENIUS_API_SECRET_TOKEN}`,
         },
       };
       const url = `https://api.genius.com/artists/${
