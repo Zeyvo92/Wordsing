@@ -13,8 +13,8 @@ export const workerLyrics = async (event: SQSEvent) => {
 
   const job: LyricsJob = JSON.parse(event.Records[0].body);
 
-  if (!job.songId) {
-    console.error("Error songId undefined");
+  if (!job.songId || !job.artistId) {
+    console.error("Error songId or artistId undefined");
     return;
   }
 
@@ -22,14 +22,14 @@ export const workerLyrics = async (event: SQSEvent) => {
     const { data } = await get(`${BASE_GENIUS_URL}/${job.songId}`);
     const $ = cheerio.load(data);
     const lyrics = extractLyrics($);
-    await insertLyricsToDb(lyrics, job.songId);
+    await insertLyricsToDb(lyrics, job.songId, job.artistId);
   } catch (err) {
     console.error(err);
   }
   return;
 };
 
-const insertLyricsToDb = (lyrics: string, songId: number) => {
+const insertLyricsToDb = (lyrics: string, songId: number, artistId: number) => {
   if (!lyrics) {
     console.log("Lyrics empty for songId:", songId);
     return;
@@ -45,6 +45,9 @@ const insertLyricsToDb = (lyrics: string, songId: number) => {
     Item: {
       id: {
         N: songId.toString(),
+      },
+      artist_id: {
+        N: artistId.toString(),
       },
       song_id: {
         N: songId.toString(),
