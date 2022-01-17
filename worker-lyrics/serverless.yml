@@ -39,8 +39,7 @@ custom:
     skipCacheInvalidation: false
 
   serverless-offline:
-    httpPort: 4002
-    lambdaPort: 4000
+    lambdaPort: 4001
 
 plugins:
   - serverless-iam-roles-per-function

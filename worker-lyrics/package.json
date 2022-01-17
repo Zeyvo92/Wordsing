@@ -8,7 +8,7 @@
   "scripts": {
     "build": "rimraf build && tsc",
     "deploy": "npm run build && npx sls deploy",
-    "offline:flush:song": "aws dynamodb delete-table --table-name \"lyrics\" --endpoint-url http://localhost:8000 && node script/create-dynamodb-table.js",
+    "offline:flush:lyrics": "aws dynamodb delete-table --table-name \"lyrics\" --endpoint-url http://localhost:8000 && node script/create-dynamodb-table.js",
     "offline": "yarn build && npx sls offline start"
   },
   "dependencies": {

@@ -16,7 +16,8 @@
     "aws-lambda": "^1.0.7",
     "aws-sdk": "^2.1058.0",
     "axios": "^0.24.0",
-    "dotenv": "^12.0.4"
+    "dotenv": "^12.0.4",
+    "split-array": "^1.0.1"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.89",

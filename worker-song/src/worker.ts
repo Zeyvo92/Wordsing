@@ -1,11 +1,13 @@
 "use strict";
 
 import "dotenv/config";
-import { DynamoDB } from "aws-sdk";
+import { DynamoDB, SQS } from "aws-sdk";
 import get, { AxiosRequestConfig } from "axios";
 import { BatchWriteItemInput } from "aws-sdk/clients/dynamodb";
 import { SQSEvent } from "aws-lambda";
 import { Song, SongJob, SongResponse } from "./types";
+
+const splitArray = require("split-array");
 
 const DYNAMODB_MAX_ITEM_PER_QUERY = 25; // Should be <= 25 because of DynamoDB batch restriction. FYI - Genius API can support up to 50 items/call
 
@@ -37,11 +39,36 @@ export const workerSong = async (event: SQSEvent) => {
       const res: SongResponse = axiosResponse.data;
       next_page = res.response.next_page;
       promises.push(insertToDdb(res.response.songs, job.artistId));
+      promises.push(
+        sendMessageToWorkerLyrics(res.response.songs, job.artistId)
+      );
     } while (next_page && page < next_page);
   } catch (error) {
     console.error(error);
   }
   await Promise.all(promises);
+};
+
+const sendMessageToWorkerLyrics = (songs: Song, artistId: number) => {
+  const sqs = new SQS({ apiVersion: "2012-11-05", region: "eu-west-3" });
+
+  const splittedSong: Song[] = splitArray(songs, 10); // SQS sendMessageBatch can send up to 10 messages max
+  // for (const songArr of splittedSong) {
+  return splittedSong.map((songArr) => {
+    const params: SQS.SendMessageBatchRequest = {
+      Entries: [],
+      QueueUrl: process.env.IS_OFFLINE
+        ? "http://localhost:9324/000000000000/sqs-worker-lyrics"
+        : "https://sqs.eu-west-3.amazonaws.com/440971873557/sqs-worker-lyrics", // TODO: to improve
+    };
+    songArr.forEach((song) => {
+      params.Entries.push({
+        Id: song.id.toString(),
+        MessageBody: JSON.stringify({ artistId, songId: song.id }),
+      });
+    });
+    return sqs.sendMessageBatch(params).promise();
+  });
 };
 
 const insertToDdb = async (songs: Song, artistId: number) => {
@@ -79,6 +106,5 @@ const createBatchItem = (
     });
   });
 
-  console.log(JSON.stringify(batch));
   return batch;
 };
