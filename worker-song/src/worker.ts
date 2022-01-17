@@ -17,6 +17,7 @@ export const workerSong = async (event: SQSEvent) => {
 
   if (!job.artistId) {
     console.error("Error artistId undefined");
+    return;
   }
 
   try {

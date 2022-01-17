@@ -62,12 +62,8 @@ resources:
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: N
-          - AttributeName: song_id
-            AttributeType: N
         KeySchema:
           - AttributeName: id
-            KeyType: HASH
-          - AttributeName: song_id
             KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 1
