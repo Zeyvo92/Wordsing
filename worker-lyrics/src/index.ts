@@ -1,0 +1,1 @@
+export { workerLyrics } from "./worker";

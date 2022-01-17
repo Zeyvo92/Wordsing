@@ -1,0 +1,74 @@
+# serverless.yml
+service: worker-lyrics
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: eu-west-3
+  memorySize: 512 # optional, in MB, default is 1024
+  timeout: 60 # optional, in seconds, default is 6
+  versionFunctions: false # optional, default is true
+  tracing:
+    lambda: true # optional, enables tracing for all functions (can be true (true equals 'Active') 'Active' or 'PassThrough')
+
+functions:
+  workerLyrics:
+    handler: build/index.workerLyrics
+    name: ${sls:stage}-worker-lyrics
+    description: Worker lyrics
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - sqsWorkerLyrics
+              - Arn
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - dynamodb:BatchWriteItem
+        Resource: { "Fn::GetAtt": ["lyricsTable", "Arn"] }
+
+custom:
+  serverless-offline-sqs:
+    autoCreate: true
+    apiVersion: "2012-11-05"
+    endpoint: http://0.0.0.0:9324
+    region: eu-west-3
+    accessKeyId: root
+    secretAccessKey: root
+    skipCacheInvalidation: false
+
+  serverless-offline:
+    httpPort: 4002
+    lambdaPort: 4000
+
+plugins:
+  - serverless-iam-roles-per-function
+  - serverless-offline-sqs
+  - serverless-offline
+
+resources:
+  Resources:
+    sqsWorkerLyrics:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "sqs-worker-lyrics"
+        VisibilityTimeout: 60
+
+    lyricsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: lyrics
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: N
+          - AttributeName: song_id
+            AttributeType: N
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: song_id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
