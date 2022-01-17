@@ -19,12 +19,10 @@ export const workerLyrics = async (event: SQSEvent) => {
   }
 
   try {
-    console.log(`${BASE_GENIUS_URL}/${job.songId}`);
     const { data } = await get(`${BASE_GENIUS_URL}/${job.songId}`);
     const $ = cheerio.load(data);
     const lyrics = extractLyrics($);
     await insertLyricsToDb(lyrics, job.songId);
-    console.log(lyrics);
   } catch (err) {
     console.error(err);
   }

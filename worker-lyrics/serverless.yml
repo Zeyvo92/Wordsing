@@ -25,7 +25,7 @@ functions:
     iamRoleStatements:
       - Effect: "Allow"
         Action:
-          - dynamodb:BatchWriteItem
+          - dynamodb:PutItem
         Resource: { "Fn::GetAtt": ["lyricsTable", "Arn"] }
 
 custom:
