@@ -29,6 +29,10 @@ functions:
         Action:
           - dynamodb:BatchWriteItem
         Resource: { "Fn::GetAtt": ["songsTable", "Arn"] }
+      - Effect: "Allow"
+        Action:
+          - sqs:SendMessage
+        Resource: arn:aws:sqs:eu-west-3:440971873557:sqs-worker-lyrics
 
 custom:
   serverless-offline-sqs:
