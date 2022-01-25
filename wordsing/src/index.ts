@@ -1,0 +1,1 @@
+export { wordsing } from "./wordsing";

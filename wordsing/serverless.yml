@@ -1,0 +1,18 @@
+# serverless.yml
+service: wordings
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: eu-west-3
+  memorySize: 512 # optional, in MB, default is 1024
+  timeout: 60 # optional, in seconds, default is 6
+  versionFunctions: false # optional, default is true
+  tracing:
+    lambda: true # optional, enables tracing for all functions (can be true (true equals 'Active') 'Active' or 'PassThrough')
+
+functions:
+  wordsing:
+    handler: build/index.wordsing
+    name: ${sls:stage}-wordings
+    description: Wordsing
